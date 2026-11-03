@@ -1,0 +1,84 @@
+services:
+  orders-api:
+    build: 
+      context: .
+      dockerfile: ./apps/orders-api/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      PRODUCTS_API_URL: http://products-api:3001
+      OTEL_SERVICE_NAME: orders-api
+      # OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://jaeger:4318/v1/traces
+      APPLICATIONINSIGHTS_CONNECTION_STRING: <connection_string_here>
+    depends_on:
+      - products-api
+    # command:
+    #   - node
+    #   - --require
+    #   - '@opentelemetry/auto-instrumentations-node/register'
+    #   - ./dist/orders-api/src/index.js
+    # command:
+    #   - node
+    #   - --import
+    #   - './dist/shared/instrumentation.js'
+    #   - ./dist/orders-api/src/index.js
+    command:
+      - node
+      - --import
+      - './dist/shared/instrumentation-ms.mjs'
+      - ./dist/orders-api/src/index.js
+
+  products-api:
+    build: 
+      context: .
+      dockerfile: ./apps/products-api/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:  
+      PORT: "3001"
+      DB_SERVER: sql-server
+      DB_NAME: ProductsDb
+      DB_USER: sa
+      DB_PASSWORD:
+      OTEL_SERVICE_NAME: products-api
+      # OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://jaeger:4318/v1/traces
+      APPLICATIONINSIGHTS_CONNECTION_STRING: <connection_string_here>
+
+    depends_on:
+      - sql-server
+    # command:
+    #   - node
+    #   - --require
+    #   - '@opentelemetry/auto-instrumentations-node/register'
+    #   - ./dist/products-api/src/index.js
+    # command:
+    #   - node
+    #   - --import
+    #   - './dist/shared/instrumentation.js'
+    #   - ./dist/products-api/src/index.js
+    command:
+      - node
+      - --import
+      - './dist/shared/instrumentation-ms.mjs'
+      - ./dist/products-api/src/index.js
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    environment:
+      MSSQL_SA_PASSWORD:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql-data:/var/opt/mssql
+
+  # jaeger:
+  #     image: jaegertracing/all-in-one:latest
+  #     ports:
+  #       - "16686:16686"
+  #       - "4317:4317"
+  #       - "4318:4318"
+  #       - "9411:9411"
+volumes:
+  sql-data:
+    
