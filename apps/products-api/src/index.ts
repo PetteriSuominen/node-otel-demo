@@ -29,7 +29,7 @@ app.get("/products/:id", async (req, res) => {
   request.input("id", id);
 
   console.log(`Executing stored procedure for product with id: ${id}`);
-  const result = await request.execute<Product>("ProductsDb.dbo.get_products");
+  const result = await request.execute<Product>("dbo.get_products");
 
   // const result = await pool
   //   .request()
